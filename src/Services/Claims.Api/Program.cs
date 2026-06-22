@@ -1,5 +1,6 @@
 using Claims.Api.Application;
 using Claims.Api.Data;
+using Claims.Api.Domain;
 using EnterpriseClaims.BuildingBlocks;
 using EnterpriseClaims.BuildingBlocks.Messaging;
 using EnterpriseClaims.Contracts.Claims;
@@ -10,17 +11,36 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHealthChecks();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
-builder.Services.AddClaimsPersistence(builder.Configuration);
-builder.Services.AddSingleton<IMessagePublisher, InMemoryMessageBus>();
 builder.Services.AddSingleton<ClaimSubmissionValidator>();
 builder.Services.AddSingleton<ClaimNumberGenerator>();
-builder.Services.AddScoped<ClaimSubmissionService>();
+
+builder.Services.AddSingleton<IMessagePublisher, InMemoryMessageBus>();
+
+var connectionString = builder.Configuration.GetConnectionString("ClaimsDb");
+builder.Services.AddDbContext<ClaimsDbContext>(options =>
+{
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        options.UseInMemoryDatabase("ClaimsDb_InMemory");
+    }
+    else
+    {
+        options.UseSqlServer(connectionString);
+    }
+});
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ClaimsDbContext>();
+    if (db.Database.IsSqlServer())
+    {
+        db.Database.Migrate();
+    }
 }
 
 app.UseExceptionHandler();
@@ -32,30 +52,57 @@ app.MapGet("/", () => Results.Ok(new
     description = "Claim submission and lifecycle boundary for the Enterprise Claims Processing Platform"
 }));
 
-app.MapPost("/claims", (
+app.MapPost("/claims", async (
     ClaimSubmissionRequest request,
-    ClaimSubmissionService service,
+    ClaimSubmissionValidator validator,
+    ClaimNumberGenerator claimNumberGenerator,
+    ClaimsDbContext dbContext,
+    IMessagePublisher messagePublisher,
     CancellationToken cancellationToken) =>
 {
-    return SubmitClaimAsync(request, service, cancellationToken);
+    cancellationToken.ThrowIfCancellationRequested();
+
+    var validation = validator.Validate(request);
+    if (!validation.IsValid)
+    {
+        return Results.BadRequest(ApiResponse.Failure<ClaimSubmissionResponse>(validation.Errors));
+    }
+
+    var claim = new ClaimRecord
+    {
+        Id = Guid.NewGuid(),
+        ClaimNumber = claimNumberGenerator.Create(),
+        CustomerId = request.CustomerId,
+        PolicyNumber = request.PolicyNumber,
+        EstimatedAmount = request.EstimatedAmount,
+        LossDescription = request.LossDescription,
+        Status = "Submitted",
+        SubmittedAt = DateTimeOffset.UtcNow
+    };
+
+    dbContext.Claims.Add(claim);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    var evt = new ClaimSubmittedEvent(
+        claim.ClaimNumber,
+        claim.CustomerId,
+        claim.PolicyNumber,
+        claim.EstimatedAmount,
+        claim.SubmittedAt);
+
+    await messagePublisher.PublishAsync(evt, cancellationToken);
+
+    var response = new ClaimSubmissionResponse(
+        claim.ClaimNumber,
+        claim.Status,
+        claim.SubmittedAt);
+
+    return Results.Accepted($"/claims/{response.ClaimNumber}", ApiResponse.Success(response));
 })
 .WithName("SubmitClaim");
 
 app.Run();
 
-static async Task<IResult> SubmitClaimAsync(
-    ClaimSubmissionRequest request,
-    ClaimSubmissionService service,
-    CancellationToken cancellationToken)
-{
-    var result = await service.SubmitAsync(request, cancellationToken);
-    if (!result.Validation.IsValid)
-    {
-        return Results.BadRequest(ApiResponse.Failure<ClaimSubmissionResponse>(result.Validation.Errors));
-    }
-
-    return Results.Accepted($"/claims/{result.Response!.ClaimNumber}", ApiResponse.Success(result.Response));
-}
 
 public partial class Program
 {
