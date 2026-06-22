@@ -1,68 +1,50 @@
 # Deployment Architecture
 
-## Deployment Goals
+This document describes the Azure infrastructure required to deploy the Enterprise Claims Processing Platform.
 
-The deployment architecture should be production-like, cost-aware, and easy to explain. Local development must not require live Azure resources.
+## Infrastructure as Code (IaC)
 
-## Azure Target Shape
+We use **Azure Bicep** to provision all infrastructure. The Bicep templates are organized modularly in the `infra/bicep` directory.
 
-```mermaid
-flowchart TD
-    subgraph Azure
-        ACR[Azure Container Registry]
-        ACA[Azure Container Apps Environment]
-        Gateway[ApiGateway Container App]
-        APIs[API Container Apps]
-        Worker[Notification Worker]
-        SQL[(Azure SQL)]
-        Bus[(Azure Service Bus)]
-        Storage[(Storage Account)]
-        KeyVault[Key Vault]
-        Logs[Log Analytics and App Insights]
-    end
+### Core Resources
+- **Azure Container Apps Environment**: Hosts the API Gateway, APIs, and background workers.
+- **Azure Container Registry**: Stores the Docker images for the services.
+- **Azure SQL Database**: Stores relational data (Claims).
+- **Azure Service Bus**: Handles asynchronous messaging (e.g., Claim updates).
+- **Azure Storage Account**: Stores binary claim document blobs.
+- **Azure Key Vault**: Manages secrets securely using Managed Identity access.
+- **Application Insights & Log Analytics**: Centralized observability.
 
-    ACR --> Gateway
-    ACR --> APIs
-    ACR --> Worker
-    Gateway --> APIs
-    APIs --> SQL
-    APIs --> Bus
-    APIs --> Storage
-    Worker --> Bus
-    APIs --> KeyVault
-    Worker --> KeyVault
-    Gateway --> Logs
-    APIs --> Logs
-    Worker --> Logs
+## Deployment Instructions (Manual Validation)
+
+To validate the Bicep templates locally before running them in a CI/CD pipeline, ensure you have the Azure CLI installed with Bicep support.
+
+### 1. Validate the Template
+This command compiles the Bicep files to verify syntax and basic semantics without connecting to Azure:
+```bash
+az bicep build --file infra/bicep/main.bicep
 ```
 
-## Preferred Azure Services
+### 2. What-If Deployment (Dry Run)
+To see exactly what Azure will create, modify, or delete in a target resource group, you can run a `what-if` deployment:
+```bash
+# Create the resource group first
+az group create --name rg-entclaims-dev --location eastus
 
-| Capability | Azure Service |
-| --- | --- |
-| Container hosting | Azure Container Apps |
-| Image registry | Azure Container Registry |
-| SQL persistence | Azure SQL |
-| Async messaging | Azure Service Bus |
-| Document storage | Azure Storage Account / Blob Storage |
-| Secrets | Azure Key Vault |
-| Observability | Log Analytics and Application Insights |
+# Run the What-If
+az deployment group what-if \
+  --resource-group rg-entclaims-dev \
+  --template-file infra/bicep/main.bicep \
+  --parameters infra/bicep/parameters/dev.bicepparam
+```
 
-## Infrastructure as Code
+### 3. Actual Deployment
+*(Note: Automated deployments should be run via Azure DevOps pipelines. This command is for manual execution.)*
+```bash
+az deployment group create \
+  --resource-group rg-entclaims-dev \
+  --template-file infra/bicep/main.bicep \
+  --parameters infra/bicep/parameters/dev.bicepparam
+```
 
-Bicep is the default IaC tool. Modules should be small, reusable, and environment-aware. Initial parameter files should target `dev` with cost-conscious defaults and placeholder tags such as `project`, `environment`, `owner`, and `costCenter`.
-
-Terraform should only be introduced if explicitly requested.
-
-## Local Development
-
-Local development should prefer:
-
-- Local SQL Server or containerized SQL Server when persistence is introduced.
-- In-memory or fake messaging before Azure Service Bus is wired.
-- Local file or fake storage before Azure Blob Storage is required.
-- Docker Compose only after there are service projects worth composing.
-
-## Release 1 Scope
-
-Release 1 should prepare the solution for future deployment without creating Bicep resources yet. Bicep modules belong in the dedicated infrastructure release.
+> **Constraints**: Do NOT deploy real secrets in the `dev.bicepparam` file. Placeholders are injected via CI/CD variables natively.
