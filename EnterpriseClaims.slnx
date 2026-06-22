@@ -13,6 +13,9 @@
   <Folder Name="/src/Shared/Contracts/">
     <Project Path="src/Shared/Contracts/EnterpriseClaims.Contracts.csproj" />
   </Folder>
+  <Folder Name="/src/Workers/">
+    <Project Path="src/Workers/Notification.Worker/Notification.Worker.csproj" />
+  </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/UnitTests/">
     <Project Path="tests/UnitTests/EnterpriseClaims.UnitTests.csproj" />

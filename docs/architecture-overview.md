@@ -99,6 +99,35 @@ Release 1 includes only the executable foundation:
 - `EnterpriseClaims.UnitTests` protects the first non-trivial claim validation behavior.
 - `docker-compose.yml` starts the gateway and two APIs for local development.
 
+## Current Release 2 Implementation
+
+```mermaid
+flowchart LR
+    Client[Client] --> Gateway[ApiGateway]
+    Gateway --> Claims[Claims.Api]
+    Claims --> DbContext[ClaimsDbContext]
+    DbContext --> LocalStore[(EF Core InMemory by default)]
+    DbContext -. configured connection string .-> Sql[(SQL Server)]
+    Claims --> Publisher[IMessagePublisher]
+    Publisher --> LocalBus[InMemoryMessageBus]
+    Claims --> Event[ClaimSubmittedEvent]
+    Event -. future mapping .-> ServiceBus[(Azure Service Bus)]
+    Worker[Notification.Worker] --> FakeEvent[Seeded fake ClaimSubmittedEvent]
+    Worker --> Notification[Local notification handler]
+```
+
+Release 2 adds:
+
+- EF Core persistence setup in `Claims.Api`.
+- A `ClaimRecord` entity and `ClaimsDbContext`.
+- SQL Server migration source files for initial claim persistence.
+- EF Core InMemory as the default local store when no connection string is configured.
+- Shared messaging abstractions in `EnterpriseClaims.BuildingBlocks`.
+- Claim submission application service that validates, persists, and publishes `ClaimSubmittedEvent`.
+- `Notification.Worker` with a fake/local event consumer for the notification boundary.
+
+Azure SQL and Azure Service Bus are design targets, not required local dependencies in this release.
+
 ## Architecture Principles
 
 - Keep controllers or endpoints thin; business rules belong in application/domain services.
@@ -111,4 +140,4 @@ Release 1 includes only the executable foundation:
 
 ## Release 1 Scope
 
-Release 1 creates the solution skeleton, initial service projects, shared contracts/building blocks, tests, and a local validation path. It intentionally does not add persistence, real authentication, Azure infrastructure, Service Bus, Blob Storage, or production observability wiring.
+Release 2 extends the foundation with local-friendly persistence and messaging abstractions. It intentionally does not add real authentication, Azure infrastructure, Azure Service Bus connectivity, Blob Storage, or production observability wiring.

@@ -86,4 +86,10 @@ Check:
 6. AGENTS.md and architecture skill rules were followed.
 
 Then tell me the exact git commit message to use.
-==================================================================================================
+========================================Prompt 3==========================================================
+
+Read and execute prompts/02-release-2-data-and-messaging.md.
+
+Follow AGENTS.md, the solution architecture skill, and the review checklist.
+
+Keep the work strictly within Release 2 scope. Summarize the plan before changes and run build/tests after implementation.

@@ -1,14 +1,20 @@
 using Claims.Api.Application;
+using Claims.Api.Data;
 using EnterpriseClaims.BuildingBlocks;
+using EnterpriseClaims.BuildingBlocks.Messaging;
 using EnterpriseClaims.Contracts.Claims;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHealthChecks();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.AddClaimsPersistence(builder.Configuration);
+builder.Services.AddSingleton<IMessagePublisher, InMemoryMessageBus>();
 builder.Services.AddSingleton<ClaimSubmissionValidator>();
 builder.Services.AddSingleton<ClaimNumberGenerator>();
+builder.Services.AddScoped<ClaimSubmissionService>();
 
 var app = builder.Build();
 
@@ -28,28 +34,28 @@ app.MapGet("/", () => Results.Ok(new
 
 app.MapPost("/claims", (
     ClaimSubmissionRequest request,
-    ClaimSubmissionValidator validator,
-    ClaimNumberGenerator claimNumberGenerator,
+    ClaimSubmissionService service,
     CancellationToken cancellationToken) =>
 {
-    cancellationToken.ThrowIfCancellationRequested();
-
-    var validation = validator.Validate(request);
-    if (!validation.IsValid)
-    {
-        return Results.BadRequest(ApiResponse.Failure<ClaimSubmissionResponse>(validation.Errors));
-    }
-
-    var response = new ClaimSubmissionResponse(
-        claimNumberGenerator.Create(),
-        "Submitted",
-        DateTimeOffset.UtcNow);
-
-    return Results.Accepted($"/claims/{response.ClaimNumber}", ApiResponse.Success(response));
+    return SubmitClaimAsync(request, service, cancellationToken);
 })
 .WithName("SubmitClaim");
 
 app.Run();
+
+static async Task<IResult> SubmitClaimAsync(
+    ClaimSubmissionRequest request,
+    ClaimSubmissionService service,
+    CancellationToken cancellationToken)
+{
+    var result = await service.SubmitAsync(request, cancellationToken);
+    if (!result.Validation.IsValid)
+    {
+        return Results.BadRequest(ApiResponse.Failure<ClaimSubmissionResponse>(result.Validation.Errors));
+    }
+
+    return Results.Accepted($"/claims/{result.Response!.ClaimNumber}", ApiResponse.Success(result.Response));
+}
 
 public partial class Program
 {

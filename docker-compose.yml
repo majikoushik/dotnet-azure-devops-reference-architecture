@@ -13,6 +13,7 @@ services:
     depends_on:
       - customer-api
       - claims-api
+      - notification-worker
 
   customer-api:
     build:
@@ -33,3 +34,11 @@ services:
       ASPNETCORE_URLS: http://+:8080
     ports:
       - "8082:8080"
+
+  notification-worker:
+    build:
+      context: .
+      dockerfile: src/Workers/Notification.Worker/Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      LocalNotifications__SeedFakeClaimSubmittedEvent: "true"

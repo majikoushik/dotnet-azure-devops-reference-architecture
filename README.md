@@ -116,6 +116,19 @@ Release 1 creates the initial executable foundation:
 
 OpenAPI documents are available in development at each service's `/openapi/v1.json` endpoint.
 
+## Release 2 Data and Messaging
+
+Release 2 adds the first data and messaging slice without requiring cloud resources:
+
+- `Claims.Api` has an EF Core `ClaimsDbContext`, `ClaimRecord` entity, repository, and SQL Server migration setup.
+- Local execution uses EF Core InMemory persistence when no `ConnectionStrings:ClaimsDatabase` value is configured.
+- SQL Server is the intended provider for deployed environments and local database testing when a developer supplies their own connection string outside source control.
+- `EnterpriseClaims.BuildingBlocks` includes a small messaging abstraction and in-memory publisher.
+- `ClaimSubmittedEvent` is published after a valid claim submission is persisted.
+- `Notification.Worker` consumes a seeded fake/local claim-submitted event to demonstrate the notification boundary.
+
+Real Azure SQL, Azure Service Bus, and durable cross-process messaging are intentionally deferred.
+
 ## Run Locally
 
 Restore, build, and test:
@@ -132,6 +145,7 @@ Run services individually:
 dotnet run --project src/Services/Customer.Api/Customer.Api.csproj
 dotnet run --project src/Services/Claims.Api/Claims.Api.csproj
 dotnet run --project src/ApiGateway/ApiGateway.csproj
+dotnet run --project src/Workers/Notification.Worker/Notification.Worker.csproj
 ```
 
 Run all Release 1 services with Docker Compose:
@@ -147,6 +161,7 @@ Default local URLs:
 | ApiGateway | `http://localhost:8080` in Docker Compose, `http://localhost:5183` with `dotnet run` |
 | Customer.Api | `http://localhost:8081` in Docker Compose, `http://localhost:5065` with `dotnet run` |
 | Claims.Api | `http://localhost:8082` in Docker Compose, `http://localhost:5259` with `dotnet run` |
+| Notification.Worker | Background worker, no HTTP endpoint |
 
 Sample requests:
 
@@ -163,7 +178,7 @@ curl -X POST http://localhost:8080/claims \
 | Release | Focus | Outcome |
 | --- | --- | --- |
 | 1 | Foundation | Solution structure, initial APIs, shared contracts, local build/test baseline |
-| 2 | Data and Messaging | EF Core persistence, document abstractions, service bus abstraction, local fakes |
+| 2 | Data and Messaging | EF Core claims persistence, messaging abstraction, notification worker, local fakes |
 | 3 | Security | JWT authentication, RBAC policies, secret-management design |
 | 4 | Observability | Correlation IDs, structured logs, OpenTelemetry, health checks |
 | 5 | Bicep Infrastructure | Azure Container Apps, SQL, Service Bus, Storage, Key Vault, monitoring modules |
@@ -184,10 +199,10 @@ The intent is not to let AI generate a large system blindly. The intent is to de
 
 ## Current Status
 
-Release 1 foundation is in place. The repository has a .NET solution, API gateway, Customer API, Claims API, shared contracts/building blocks, Docker Compose, health checks, OpenAPI documents, and initial unit tests.
+Release 2 data and messaging foundation is in place. The repository has a .NET solution, API gateway, Customer API, Claims API, shared contracts/building blocks, EF Core claims persistence setup, messaging abstraction, Notification.Worker, Docker Compose, health checks, OpenAPI documents, and unit tests.
 
 Next recommended step:
 
 ```text
-Run prompts/02-release-2-data-and-messaging.md
+Run prompts/03-release-3-security.md
 ```
