@@ -33,6 +33,13 @@ flowchart TD
 | Shared/Contracts | DTOs and integration contracts shared at service boundaries |
 | Shared/Observability | Correlation, logging, tracing, and health-check helpers |
 
+## Observability
+
+The platform leverages **OpenTelemetry** to export standard logs, metrics, and traces:
+- A shared `CorrelationIdMiddleware` ensures a consistent `X-Correlation-ID` flows through logs.
+- Azure Application Insights receives this telemetry in production.
+- Health checks are implemented at `/health`.
+
 ## Logical Architecture
 
 ```mermaid

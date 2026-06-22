@@ -3,13 +3,15 @@ using Claims.Api.Data;
 using Claims.Api.Domain;
 using EnterpriseClaims.BuildingBlocks;
 using EnterpriseClaims.BuildingBlocks.Messaging;
+using EnterpriseClaims.BuildingBlocks.Observability;
 using EnterpriseClaims.BuildingBlocks.Security;
 using EnterpriseClaims.Contracts.Claims;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ClaimsDbContext>("ClaimsDbContextHealthCheck");
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<ClaimSubmissionValidator>();
@@ -17,6 +19,8 @@ builder.Services.AddSingleton<ClaimNumberGenerator>();
 
 builder.Services.AddSingleton<IMessagePublisher, InMemoryMessageBus>();
 builder.Services.AddEnterpriseSecurity(builder.Configuration);
+
+builder.AddEnterpriseObservability();
 
 var connectionString = builder.Configuration.GetConnectionString("ClaimsDb");
 builder.Services.AddDbContext<ClaimsDbContext>(options =>
@@ -45,6 +49,7 @@ if (app.Environment.IsDevelopment())
     }
 }
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,4 +1,5 @@
 using EnterpriseClaims.BuildingBlocks;
+using EnterpriseClaims.BuildingBlocks.Observability;
 using EnterpriseClaims.BuildingBlocks.Security;
 using EnterpriseClaims.Contracts.Customers;
 
@@ -9,6 +10,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddEnterpriseSecurity(builder.Configuration);
 
+builder.AddEnterpriseObservability();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -16,6 +19,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
