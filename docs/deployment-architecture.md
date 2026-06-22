@@ -2,6 +2,40 @@
 
 This document describes the Azure infrastructure required to deploy the Enterprise Claims Processing Platform.
 
+## Physical Architecture
+
+```mermaid
+graph TD
+    subgraph "Azure Cloud (East US)"
+        subgraph "Azure Container Apps Environment"
+            Gateway[API Gateway]
+            Claims[Claims API]
+            Customer[Customer API]
+            Worker[Notification Worker]
+        end
+
+        SQL[(Azure SQL)]
+        SB{{Service Bus}}
+        KV>Key Vault]
+        Storage[(Storage Account)]
+        ACR([Container Registry])
+
+        Gateway --> Claims
+        Gateway --> Customer
+
+        Claims --> SQL
+        Claims --> SB
+        Customer --> SQL
+
+        Worker --> SB
+
+        Claims -.-> KV
+        Customer -.-> KV
+
+        Gateway -. pulls image .-> ACR
+    end
+```
+
 ## Infrastructure as Code (IaC)
 
 We use **Azure Bicep** to provision all infrastructure. The Bicep templates are organized modularly in the `infra/bicep` directory.

@@ -41,7 +41,7 @@ Important rules:
 * Add comments only where they clarify architectural intent.
 * After changes, summarize what was created, how to run locally, what tests were added, and what is intentionally left for later releases.
 ==================================================Prompt 3===============================
-Review your Release 6 changes against AGENTS.md, the enterprise-claims-solution-architecture skill, and docs/codex/review-checklist.md.
+Review your Release 7 changes against AGENTS.md, prompts/07-release-7-architecture-polish.md, the enterprise-claims-solution-architecture skill, and docs/codex/review-checklist.md.
 
 Report:
 
@@ -88,8 +88,8 @@ Check:
 Then tell me the exact git commit message to use.
 ========================================Prompt 3==========================================================
 
-Read and execute prompts/06-release-6-azure-devops-pipelines.md.
+Read and execute prompts/07-release-7-architecture-polish.md.
 
 Follow AGENTS.md, the solution architecture skill, and the review checklist.
 
-Keep the work strictly within Release 6 scope. Summarize the plan before changes and run build/tests after implementation.
+Keep the work strictly within Release 7 scope. Summarize the plan before changes and run build/tests after implementation.

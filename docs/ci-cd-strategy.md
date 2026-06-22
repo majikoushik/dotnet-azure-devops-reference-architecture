@@ -4,6 +4,36 @@ This document outlines the Continuous Integration and Continuous Deployment stra
 
 The pipeline architecture is driven by **Azure DevOps YAML Pipelines** and is located entirely inside the `pipelines/` directory.
 
+## Pipeline Flow
+
+```mermaid
+stateDiagram-v2
+    state "Continuous Integration" as CI {
+        Build: .NET Build
+        Test: xUnit & Coverage
+        Scan: Security & Dependency Scan
+        Docker: Docker Build & Push ACR
+
+        Build --> Test
+        Build --> Scan
+        Test --> Docker
+        Scan --> Docker
+    }
+
+    state "Continuous Deployment (Dev)" as CD {
+        Bicep: az bicep deploy
+        ACA: az containerapp update
+        Smoke: Smoke Test (/health)
+
+        Bicep --> ACA
+        ACA --> Smoke
+    }
+
+    [*] --> CI : Git Push (main)
+    CI --> CD : Success
+    CD --> [*]
+```
+
 ## Pipeline Architecture
 
 We use a **multi-stage template-driven pipeline**. The orchestration occurs in `pipelines/azure-pipelines.yml`.

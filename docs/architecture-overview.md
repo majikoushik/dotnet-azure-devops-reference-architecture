@@ -135,6 +135,57 @@ Release 2 adds:
 
 Azure SQL and Azure Service Bus are design targets, not required local dependencies in this release.
 
+## System Context
+
+```mermaid
+C4Context
+    title System Context diagram for Enterprise Claims Platform
+
+    Person(customer, "Policy Holder", "A customer of the insurance company.")
+    Person(adjuster, "Claims Adjuster", "An employee handling insurance claims.")
+
+    System(claimsPlatform, "Enterprise Claims Platform", "Allows customers to submit claims, and adjusters to validate them.")
+    System_Ext(emailSystem, "Email System", "Internal Microsoft Exchange System.")
+
+    Rel(customer, claimsPlatform, "Submits and tracks claims")
+    Rel(adjuster, claimsPlatform, "Validates and processes claims")
+    Rel(claimsPlatform, emailSystem, "Sends notifications using")
+    Rel(emailSystem, customer, "Sends emails to")
+```
+
+## Architecture Style
+
+The platform follows a modular microservice architecture. Services are logically separated by domain boundaries, enabling independent scaling and deployment.
+
+## Container Diagram
+
+```mermaid
+C4Container
+    title Container diagram for Enterprise Claims Platform
+
+    Person(user, "User", "Policy Holder or Adjuster")
+
+    System_Boundary(c1, "Enterprise Claims Platform") {
+        Container(apiGateway, "API Gateway", "YARP", "Routes incoming requests to the appropriate backend service")
+
+        Container(customerApi, "Customer API", ".NET 10", "Manages policyholder data and verification")
+        Container(claimsApi, "Claims API", ".NET 10", "Core domain logic for claim submission and validation")
+        Container(notificationWorker, "Notification Worker", ".NET 10 Background Service", "Listens for claim events and dispatches alerts")
+
+        ContainerDb(sqlDb, "Claims SQL Database", "Azure SQL", "Stores relational claim data")
+        ContainerQueue(serviceBus, "Message Broker", "Azure Service Bus", "Pub/Sub for domain events")
+    }
+
+    Rel(user, apiGateway, "Makes API calls to", "JSON/HTTPS")
+    Rel(apiGateway, customerApi, "Routes customer traffic to", "HTTPS")
+    Rel(apiGateway, claimsApi, "Routes claims traffic to", "HTTPS")
+
+    Rel(claimsApi, sqlDb, "Reads/Writes", "EF Core / TCP")
+    Rel(claimsApi, serviceBus, "Publishes ClaimSubmitted Event", "AMQP")
+
+    Rel(notificationWorker, serviceBus, "Subscribes to ClaimSubmitted Event", "AMQP")
+```
+
 ## Architecture Principles
 
 - Keep controllers or endpoints thin; business rules belong in application/domain services.
@@ -144,7 +195,3 @@ Azure SQL and Azure Service Bus are design targets, not required local dependenc
 - Avoid circular dependencies between services.
 - Use local fakes or in-memory implementations where Azure resources are not required for development.
 - Capture important trade-offs in ADRs.
-
-## Release 1 Scope
-
-Release 2 extends the foundation with local-friendly persistence and messaging abstractions. It intentionally does not add real authentication, Azure infrastructure, Azure Service Bus connectivity, Blob Storage, or production observability wiring.

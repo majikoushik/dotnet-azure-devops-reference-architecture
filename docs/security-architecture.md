@@ -11,6 +11,36 @@ The platform should be secure by default while remaining practical for local dev
 - Validate input at API boundaries.
 - Keep sample data fictional.
 
+## Security Boundaries
+
+```mermaid
+graph TD
+    Client[External Client]
+
+    subgraph "Azure VNet (Planned)"
+        Gateway[API Gateway (YARP)]
+
+        subgraph "Application Subnet"
+            Claims[Claims API]
+            Customer[Customer API]
+        end
+
+        subgraph "Data Subnet"
+            SQL[(Azure SQL)]
+            KV>Key Vault]
+        end
+    end
+
+    Client -- HTTPS (JWT) --> Gateway
+    Gateway -- HTTPS --> Claims
+    Gateway -- HTTPS --> Customer
+
+    Claims -- Managed Identity --> SQL
+    Claims -- Managed Identity --> KV
+```
+
+## Identity and Access Management (IAM)
+
 ## Roles
 
 | Role | Example Capabilities |

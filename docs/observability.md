@@ -1,5 +1,33 @@
 # Observability
 
+## Observability Flow
+
+```mermaid
+graph LR
+    subgraph "Microservices"
+        API[Claims API]
+        Worker[Notification Worker]
+    end
+
+    subgraph "OpenTelemetry Collector / SDK"
+        Metrics[Metrics]
+        Traces[Traces]
+        Logs[Logs]
+    end
+
+    subgraph "Azure Monitor"
+        AppInsights([Application Insights])
+        LogAnalytics([Log Analytics Workspace])
+    end
+
+    API --> Traces & Logs & Metrics
+    Worker --> Traces & Logs & Metrics
+
+    Traces --> AppInsights
+    Metrics --> AppInsights
+    Logs --> LogAnalytics
+```
+
 This document outlines the observability strategy for the Enterprise Claims Processing Platform.
 
 ## Approach
