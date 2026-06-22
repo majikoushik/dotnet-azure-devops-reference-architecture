@@ -1,0 +1,6 @@
+# Project-scoped Codex configuration for this repository.
+# Keep repo behavior conservative and repeatable.
+# You may adjust these values locally if your Codex version supports them.
+
+project_doc_max_bytes = 65536
+project_doc_fallback_filenames = ["CONTRIBUTING.md", "docs/codex/agent-guidance.md"]

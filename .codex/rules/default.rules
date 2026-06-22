@@ -1,0 +1,66 @@
+# Codex command rules for this repository.
+# These rules are intentionally conservative for a public portfolio repo.
+# Rules control which commands Codex can run outside the sandbox.
+
+prefix_rule(
+    pattern = ["dotnet", "restore"],
+    decision = "allow",
+    justification = "Restoring .NET packages is expected for local validation.",
+    match = ["dotnet restore", "dotnet restore src/EnterpriseClaims.sln"],
+)
+
+prefix_rule(
+    pattern = ["dotnet", "build"],
+    decision = "allow",
+    justification = "Building the .NET solution is required for validation.",
+    match = ["dotnet build", "dotnet build --configuration Release"],
+)
+
+prefix_rule(
+    pattern = ["dotnet", "test"],
+    decision = "allow",
+    justification = "Running tests is required after meaningful code changes.",
+    match = ["dotnet test", "dotnet test --configuration Release"],
+)
+
+prefix_rule(
+    pattern = ["docker", "compose"],
+    decision = "prompt",
+    justification = "Docker Compose can start local services and consume resources; request approval first.",
+    match = ["docker compose up --build", "docker compose down"],
+)
+
+prefix_rule(
+    pattern = ["az"],
+    decision = "prompt",
+    justification = "Azure CLI commands can change cloud resources or incur cost; request approval first.",
+    match = ["az deployment group create", "az group create"],
+)
+
+prefix_rule(
+    pattern = ["dotnet", "ef", "database", "update"],
+    decision = "prompt",
+    justification = "Database updates change local or remote data stores; request approval first.",
+    match = ["dotnet ef database update"],
+)
+
+prefix_rule(
+    pattern = ["git", "push"],
+    decision = "prompt",
+    justification = "Pushing changes should be explicitly approved by the repository owner.",
+    match = ["git push", "git push origin main"],
+)
+
+prefix_rule(
+    pattern = ["git", "commit"],
+    decision = "prompt",
+    justification = "Commits should be reviewed before becoming part of project history.",
+    match = ["git commit -m initial-architecture"],
+)
+
+prefix_rule(
+    pattern = ["rm", "-rf"],
+    decision = "forbidden",
+    justification = "Destructive recursive deletion is blocked. Use a safer targeted delete after explicit review.",
+    match = ["rm -rf .", "rm -rf src"],
+)
