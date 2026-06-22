@@ -1,4 +1,5 @@
 using EnterpriseClaims.BuildingBlocks;
+using EnterpriseClaims.BuildingBlocks.Security;
 using EnterpriseClaims.Contracts.Customers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHealthChecks();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.AddEnterpriseSecurity(builder.Configuration);
 
 var app = builder.Build();
 
@@ -15,6 +17,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapHealthChecks("/health");
 app.MapGet("/", () => Results.Ok(new
@@ -32,7 +36,8 @@ app.MapGet("/customers/{customerId}", (string customerId) =>
 
     return Results.Ok(ApiResponse.Success(SampleCustomer));
 })
-.WithName("GetCustomerById");
+.WithName("GetCustomerById")
+.RequireAuthorization("Customer");
 
 app.Run();
 

@@ -20,11 +20,21 @@ The platform should be secure by default while remaining practical for local dev
 | Supervisor | Override or approve higher-risk decisions |
 | Admin | Manage operational configuration and system-level access |
 
-## Identity and Secret Management
+## Authentication & Authorization
 
-Local development may use placeholder JWT settings and local user secrets where needed. Production design should rely on:
+The platform uses **JWT Bearer Authentication** to verify identities and **Role-Based Authorization Policies** to enforce access control.
 
-- Microsoft Entra ID or equivalent identity provider for token issuance.
+### Identity Provider
+- **Local Development**: We use a basic symmetric-key JWT configuration. A local script or tool can generate a signed token using a placeholder secret from `appsettings.Development.json`.
+- **Production**: The application will integrate with **Microsoft Entra ID**. The API Gateway or downstream services validate the Entra ID tokens.
+
+### Roles and Policies
+The following policies are defined across all APIs using a shared `AddEnterpriseSecurity` extension:
+- `Customer`: Can view their own claims and submit new claims.
+- `ClaimProcessor`: Can view all claims and update claim status.
+- `Supervisor`: Can override risk scores and approve high-value claims.
+- `Admin`: Can manage system configuration and all operational aspects.
+
 - Managed Identity for Azure resource access.
 - Key Vault references for secrets and certificates.
 - Secure pipeline variables or variable groups for deployment-time configuration.

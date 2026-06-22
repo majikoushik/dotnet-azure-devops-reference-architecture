@@ -3,6 +3,7 @@ using Claims.Api.Data;
 using Claims.Api.Domain;
 using EnterpriseClaims.BuildingBlocks;
 using EnterpriseClaims.BuildingBlocks.Messaging;
+using EnterpriseClaims.BuildingBlocks.Security;
 using EnterpriseClaims.Contracts.Claims;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +16,7 @@ builder.Services.AddSingleton<ClaimSubmissionValidator>();
 builder.Services.AddSingleton<ClaimNumberGenerator>();
 
 builder.Services.AddSingleton<IMessagePublisher, InMemoryMessageBus>();
+builder.Services.AddEnterpriseSecurity(builder.Configuration);
 
 var connectionString = builder.Configuration.GetConnectionString("ClaimsDb");
 builder.Services.AddDbContext<ClaimsDbContext>(options =>
@@ -44,6 +46,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapHealthChecks("/health");
 app.MapGet("/", () => Results.Ok(new
@@ -99,10 +103,36 @@ app.MapPost("/claims", async (
 
     return Results.Accepted($"/claims/{response.ClaimNumber}", ApiResponse.Success(response));
 })
-.WithName("SubmitClaim");
+.WithName("SubmitClaim")
+.RequireAuthorization("Customer");
+
+app.MapGet("/claims/{claimNumber}", async (
+    string claimNumber,
+    ClaimsDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var claim = await dbContext.Claims.FirstOrDefaultAsync(c => c.ClaimNumber == claimNumber, cancellationToken);
+    
+    if (claim is null)
+    {
+        return Results.NotFound(ApiResponse.Failure<ClaimStatusResponse>([ApiError.NotFound("claim.not_found", "Claim not found.")]));
+    }
+
+    var response = new ClaimStatusResponse(
+        claim.ClaimNumber,
+        claim.CustomerId,
+        claim.PolicyNumber,
+        claim.EstimatedAmount,
+        claim.Status,
+        claim.LossDescription,
+        claim.SubmittedAt);
+
+    return Results.Ok(ApiResponse.Success(response));
+})
+.WithName("GetClaimStatus")
+.RequireAuthorization();
 
 app.Run();
-
 
 public partial class Program
 {

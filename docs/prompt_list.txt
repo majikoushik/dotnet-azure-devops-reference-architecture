@@ -88,8 +88,8 @@ Check:
 Then tell me the exact git commit message to use.
 ========================================Prompt 3==========================================================
 
-Read and execute prompts/02-release-2-data-and-messaging.md.
+Read and execute prompts/03-release-3-security.md.
 
 Follow AGENTS.md, the solution architecture skill, and the review checklist.
 
-Keep the work strictly within Release 2 scope. Summarize the plan before changes and run build/tests after implementation.
+Keep the work strictly within Release 3 scope. Summarize the plan before changes and run build/tests after implementation.
