@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ApiGateway/ApiGateway.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/">
+    <Project Path="src/Services/Claims.Api/Claims.Api.csproj" />
+    <Project Path="src/Services/Customer.Api/Customer.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/" />
+  <Folder Name="/src/Shared/BuildingBlocks/">
+    <Project Path="src/Shared/BuildingBlocks/EnterpriseClaims.BuildingBlocks.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/Contracts/">
+    <Project Path="src/Shared/Contracts/EnterpriseClaims.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/UnitTests/">
+    <Project Path="tests/UnitTests/EnterpriseClaims.UnitTests.csproj" />
+  </Folder>
+</Solution>

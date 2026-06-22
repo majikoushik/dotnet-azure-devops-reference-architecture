@@ -58,6 +58,7 @@ flowchart LR
 ## Proposed Repository Structure
 
 ```text
+EnterpriseClaims.slnx
 src/
   ApiGateway/
   Services/
@@ -101,6 +102,62 @@ docs/
 
 The repository will grow release by release. Bootstrap documentation exists first so implementation work has a clear architectural north star.
 
+## Release 1 Foundation
+
+Release 1 creates the initial executable foundation:
+
+- `ApiGateway`: YARP reverse proxy with `/health` and routes for Customer and Claims APIs.
+- `Customer.Api`: customer boundary with `/health` and `GET /customers/{customerId}`.
+- `Claims.Api`: claims boundary with `/health` and `POST /claims`.
+- `EnterpriseClaims.Contracts`: DTOs and integration event contracts.
+- `EnterpriseClaims.BuildingBlocks`: common API response, error, and validation primitives.
+- `EnterpriseClaims.UnitTests`: initial unit tests for claim submission validation.
+- `docker-compose.yml`: local startup for the gateway and two APIs.
+
+OpenAPI documents are available in development at each service's `/openapi/v1.json` endpoint.
+
+## Run Locally
+
+Restore, build, and test:
+
+```bash
+dotnet restore EnterpriseClaims.slnx
+dotnet build EnterpriseClaims.slnx
+dotnet test EnterpriseClaims.slnx
+```
+
+Run services individually:
+
+```bash
+dotnet run --project src/Services/Customer.Api/Customer.Api.csproj
+dotnet run --project src/Services/Claims.Api/Claims.Api.csproj
+dotnet run --project src/ApiGateway/ApiGateway.csproj
+```
+
+Run all Release 1 services with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+Default local URLs:
+
+| Service | URL |
+| --- | --- |
+| ApiGateway | `http://localhost:8080` in Docker Compose, `http://localhost:5183` with `dotnet run` |
+| Customer.Api | `http://localhost:8081` in Docker Compose, `http://localhost:5065` with `dotnet run` |
+| Claims.Api | `http://localhost:8082` in Docker Compose, `http://localhost:5259` with `dotnet run` |
+
+Sample requests:
+
+```bash
+curl http://localhost:8080/health
+curl http://localhost:8080/customers/CUST-1001
+curl -X POST http://localhost:8080/claims \
+  -H "Content-Type: application/json" \
+  -d "{\"customerId\":\"CUST-1001\",\"policyNumber\":\"POL-2026-0001\",\"estimatedAmount\":1250.50,\"lossDescription\":\"Water damage to kitchen flooring.\"}"
+```
+
 ## Release Roadmap
 
 | Release | Focus | Outcome |
@@ -127,10 +184,10 @@ The intent is not to let AI generate a large system blindly. The intent is to de
 
 ## Current Status
 
-Bootstrap documentation is in place. Application code has not been created yet.
+Release 1 foundation is in place. The repository has a .NET solution, API gateway, Customer API, Claims API, shared contracts/building blocks, Docker Compose, health checks, OpenAPI documents, and initial unit tests.
 
 Next recommended step:
 
 ```text
-Run prompts/01-release-1-foundation.md
+Run prompts/02-release-2-data-and-messaging.md
 ```

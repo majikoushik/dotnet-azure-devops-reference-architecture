@@ -1,0 +1,35 @@
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: src/ApiGateway/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ReverseProxy__Clusters__customer-api__Destinations__destination1__Address: http://customer-api:8080/
+      ReverseProxy__Clusters__claims-api__Destinations__destination1__Address: http://claims-api:8080/
+    ports:
+      - "8080:8080"
+    depends_on:
+      - customer-api
+      - claims-api
+
+  customer-api:
+    build:
+      context: .
+      dockerfile: src/Services/Customer.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    ports:
+      - "8081:8080"
+
+  claims-api:
+    build:
+      context: .
+      dockerfile: src/Services/Claims.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    ports:
+      - "8082:8080"

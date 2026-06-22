@@ -1,0 +1,89 @@
+=================================Prompt 1====================================
+Read AGENTS.md, START_HERE.md, .agents/skills/enterprise-claims-solution-architecture/SKILL.md, and prompts/00-bootstrap-repository.md.
+
+Follow all repository guidance and execute the bootstrap prompt step by step.
+
+Before making changes, briefly summarize:
+
+1. the project goal,
+2. the active architecture rules,
+3. the files you plan to create or modify.
+
+Then implement the bootstrap work for the Enterprise Claims Processing Platform.
+===========================================================
+Review your own changes against AGENTS.md and docs/codex/review-checklist.md. Tell me what passed, what is missing, and what should be improved before commit.
+============================================Prompt 2=====================================
+Read AGENTS.md, START_HERE.md, .agents/skills/enterprise-claims-solution-architecture/SKILL.md, docs/codex/review-checklist.md, and prompts/01-release-1-foundation.md.
+
+Before coding, review the current repository state created by the bootstrap step.
+
+Then execute Release 1 — Foundation step by step.
+
+Focus on creating a clean .NET enterprise foundation for the Enterprise Claims Processing Platform, including:
+
+1. solution and project structure,
+2. API Gateway,
+3. Customer API,
+4. Claims API,
+5. shared building blocks,
+6. health checks,
+7. Swagger/OpenAPI,
+8. Docker Compose for local development,
+9. initial unit tests,
+10. clear README updates.
+
+Important rules:
+
+* Follow AGENTS.md and the solution architecture skill.
+* Do not overbuild business features.
+* Keep Release 1 focused on foundation only.
+* Use clean architecture-style separation where useful, but avoid unnecessary complexity.
+* Add comments only where they clarify architectural intent.
+* After changes, summarize what was created, how to run locally, what tests were added, and what is intentionally left for later releases.
+==================================================Prompt 3===============================
+Review your Release 1 changes against AGENTS.md, the enterprise-claims-solution-architecture skill, and docs/codex/review-checklist.md.
+
+Report:
+
+1. what passed,
+2. what needs improvement,
+3. whether the repository is ready to commit,
+4. the exact git commit message I should use.
+=============================================================================================
+You suggested the following improvements after reviewing Release 1.
+
+Now convert those suggestions into a small implementation plan.
+
+Rules:
+
+1. Only implement improvements that belong to Release 1 — Foundation.
+2. Do not start Release 2 features such as database persistence, messaging, authentication, Azure infrastructure, or CI/CD.
+3. Group the improvements into:
+
+   * Must fix before commit
+   * Good to improve now
+   * Defer to later release
+4. Explain why each item belongs in that group.
+5. After the plan, implement only the “Must fix before commit” and “Good to improve now” items.
+6. Keep the changes minimal, clean, and aligned with AGENTS.md and the architecture skill.
+7. After implementation, summarize:
+
+   * files changed,
+   * improvements completed,
+   * items deferred,
+   * tests run,
+   * whether the repository is ready to commit.
+===============================================================================================
+Perform a final Release 1 readiness review.
+
+Check:
+
+1. dotnet build passes,
+2. tests pass,
+3. Docker Compose file is valid,
+4. README local run steps are accurate,
+5. Release 1 scope has not expanded into later releases,
+6. AGENTS.md and architecture skill rules were followed.
+
+Then tell me the exact git commit message to use.
+==================================================================================================

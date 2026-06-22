@@ -1,0 +1,11 @@
+@Customer.Api_HostAddress = http://localhost:5065
+
+GET {{Customer.Api_HostAddress}}/health
+Accept: application/json
+
+###
+
+GET {{Customer.Api_HostAddress}}/customers/CUST-1001
+Accept: application/json
+
+###

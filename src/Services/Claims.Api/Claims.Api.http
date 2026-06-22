@@ -1,0 +1,16 @@
+@Claims.Api_HostAddress = http://localhost:5259
+
+GET {{Claims.Api_HostAddress}}/health
+Accept: application/json
+
+###
+
+POST {{Claims.Api_HostAddress}}/claims
+Content-Type: application/json
+
+{
+  "customerId": "CUST-1001",
+  "policyNumber": "POL-2026-0001",
+  "estimatedAmount": 1250.50,
+  "lossDescription": "Water damage to kitchen flooring."
+}

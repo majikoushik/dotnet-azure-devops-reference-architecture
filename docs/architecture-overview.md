@@ -75,6 +75,30 @@ flowchart LR
     Services --> Monitor
 ```
 
+## Current Release 1 Implementation
+
+```mermaid
+flowchart LR
+    Client[Client] --> Gateway[ApiGateway]
+    Gateway --> Customer[Customer.Api]
+    Gateway --> Claims[Claims.Api]
+    Claims --> Contracts[EnterpriseClaims.Contracts]
+    Customer --> Contracts
+    Claims --> BuildingBlocks[EnterpriseClaims.BuildingBlocks]
+    Customer --> BuildingBlocks
+    Tests[EnterpriseClaims.UnitTests] --> Claims
+```
+
+Release 1 includes only the executable foundation:
+
+- `ApiGateway` uses YARP to route `/customers/{**catch-all}` to Customer.Api and `/claims/{**catch-all}` to Claims.Api.
+- `Customer.Api` exposes a health endpoint and one fictional sample customer read endpoint.
+- `Claims.Api` exposes a health endpoint and a basic claim submission endpoint.
+- `EnterpriseClaims.Contracts` contains DTOs and an initial claim-submitted event contract.
+- `EnterpriseClaims.BuildingBlocks` contains common response, error, and validation primitives.
+- `EnterpriseClaims.UnitTests` protects the first non-trivial claim validation behavior.
+- `docker-compose.yml` starts the gateway and two APIs for local development.
+
 ## Architecture Principles
 
 - Keep controllers or endpoints thin; business rules belong in application/domain services.
@@ -87,4 +111,4 @@ flowchart LR
 
 ## Release 1 Scope
 
-Release 1 should create the solution skeleton, initial service projects, shared contracts/building blocks, tests, and a local validation path. It should not attempt to implement the full enterprise platform in one pass.
+Release 1 creates the solution skeleton, initial service projects, shared contracts/building blocks, tests, and a local validation path. It intentionally does not add persistence, real authentication, Azure infrastructure, Service Bus, Blob Storage, or production observability wiring.
