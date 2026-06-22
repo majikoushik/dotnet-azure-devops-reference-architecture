@@ -20,6 +20,7 @@ variables:
   # The EnterpriseClaims-Dev-Variables group should contain:
   # - containerRegistry: (e.g., myacr.azurecr.io)
   # - containerAppEnvironmentDomain: (e.g., myenv.eastus.azurecontainerapps.io)
+  # - SqlAdminPassword: (Secure variable for Azure SQL provisioning)
   - group: 'EnterpriseClaims-Dev-Variables'
   - name: azureServiceConnection
     value: 'Azure-ARM-Service-Connection'
@@ -78,6 +79,14 @@ stages:
         steps:
           - template: templates/security-scan.yml
 
+      - job: BicepValidation
+        displayName: 'Validate Bicep Infrastructure'
+        steps:
+          - script: |
+              echo "Validating Bicep syntax..."
+              az bicep build --file infra/bicep/main.bicep
+            displayName: 'Run az bicep build'
+
   - stage: DeployDev
     displayName: 'Deploy to Development'
     dependsOn: Build
@@ -97,6 +106,7 @@ stages:
                     resourceGroupName: '$(resourceGroupDev)'
                     location: '$(location)'
                     environment: 'dev'
+                    sqlAdminPassword: '$(SqlAdminPassword)'
 
       - deployment: DeployApps
         displayName: 'Deploy Container Apps'

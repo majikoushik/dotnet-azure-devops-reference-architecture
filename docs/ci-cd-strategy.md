@@ -13,11 +13,13 @@ stateDiagram-v2
         Test: xUnit & Coverage
         Scan: Security & Dependency Scan
         Docker: Docker Build & Push ACR
+        BicepBuild: az bicep build (Validation)
 
         Build --> Test
         Build --> Scan
         Test --> Docker
         Scan --> Docker
+        BicepBuild --> Docker
     }
 
     state "Continuous Deployment (Dev)" as CD {

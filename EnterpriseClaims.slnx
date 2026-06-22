@@ -20,4 +20,7 @@
   <Folder Name="/tests/UnitTests/">
     <Project Path="tests/UnitTests/EnterpriseClaims.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/tests/ArchitectureTests/">
+    <Project Path="tests/ArchitectureTests/EnterpriseClaims.ArchitectureTests.csproj" />
+  </Folder>
 </Solution>

@@ -7,7 +7,7 @@ The platform should be secure by default while remaining practical for local dev
 - Authenticate API callers with JWT bearer tokens.
 - Authorize operations through role-based policies.
 - Avoid storing or logging secrets and sensitive insurance data.
-- Use Managed Identity and Key Vault in production Azure design.
+- Use User Assigned Managed Identities in Azure (Implemented for ACR Pull, planned for Key Vault and SQL).
 - Validate input at API boundaries.
 - Keep sample data fictional.
 

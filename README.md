@@ -25,6 +25,22 @@ The platform handles the core lifecycle of insurance claims:
 - **Hosting**: Azure Container Apps (ACA)
 - **IaC**: Azure Bicep
 
+## 📊 Implemented vs. Planned Matrix
+To provide full transparency on the state of this portfolio architecture:
+
+| Capability | Status | Description |
+| ---------- | ------ | ----------- |
+| **Microservices API** | 🟢 Implemented | .NET 10 APIs behind YARP API Gateway. |
+| **Azure Container Apps** | 🟢 Implemented | Bicep fully provisions the ACA environments and apps, bootstrapping with a `helloworld` image until the CD pipeline overwrites them with real artifacts. |
+| **CI/CD Pipelines** | 🟢 Implemented | Azure DevOps YAML pipelines (Build, Test, Dependency Scan, Bicep Deploy). Container scanning (Trivy/Defender) is planned for V2. |
+| **Local JWT Auth** | 🟢 Implemented | Working local JWT token validation with role checks. |
+| **Entity Framework SQL** | 🟢 Implemented | Code-first migrations targeting SQL Server locally (Docker) and Azure SQL in the cloud. |
+| **Observability** | 🟢 Implemented | OpenTelemetry traces/logs routed to Application Insights (requires instrumentation key at runtime). |
+| **Managed Identities** | 🟡 Partial | Bicep scaffolds User Assigned Identity for ACR Pull. Key Vault/SQL planned. |
+| **Service Bus Messaging** | 🟡 Partial | Abstraction and InMemory bus implemented. Azure Service Bus IaC scaffolded. Actual Azure consumption logic planned for V2. |
+| **Key Vault Secrets** | ⚪ Planned | IaC scaffolded. Application integration planned for V2. |
+| **Blob Storage** | ⚪ Planned | IaC scaffolded. Document upload API planned for V2. |
+
 ## Agentic AI Engineering Practices
 This repository is unique: it was co-developed using an **Agentic AI coding assistant**.
 The repository heavily enforces strict constraints via prompt engineering and agent rules to guarantee enterprise-grade output.
@@ -52,8 +68,30 @@ While this serves as a robust reference architecture, a true production V2 would
 3. **Dapr Integration**: Abstract the Service Bus and Key Vault integrations behind Dapr sidecars to further decouple the microservices from Azure SDKs.
 4. **Terraform Migration**: Provide an alternative Infrastructure as Code provider utilizing Terraform alongside Bicep.
 
-## Local Development
+## 🛠️ Local Development
+To run the platform completely locally using Docker Compose:
+
 1. Clone the repository.
-2. Run `dotnet build`.
-3. Set your local environment variables or User Secrets for the SQL Connection string.
-4. Run the API Gateway, Claims API, Customer API, and Notification Worker concurrently.
+2. Create an environment file:
+   ```bash
+   cp .env.example .env
+   ```
+   *Edit `.env` to set your `SQL_PASSWORD` and `JWT_KEY`.*
+3. Build the solutions to verify:
+   ```bash
+   dotnet restore EnterpriseClaims.slnx
+   dotnet build EnterpriseClaims.slnx
+   ```
+4. Start the infrastructure and microservices:
+   ```bash
+   docker compose up --build
+   ```
+5. **Testing the APIs:**
+   You will need a valid JWT to hit the secure endpoints. A PowerShell helper script is provided to mint a local testing token:
+
+   ```powershell
+   # Run the script to generate a JWT for local testing
+   .\scripts\generate-local-jwt.ps1
+   ```
+
+   *Note: Ensure your `.env` is populated with `JWT_KEY`, `JWT_ISSUER`, and `JWT_AUDIENCE` before running the script. The generated token includes the `Customer` role and `customerId` claim required for submission and status retrieval.*

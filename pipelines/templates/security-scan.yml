@@ -1,9 +1,9 @@
-# Note: This is a portfolio-ready placeholder demonstrating where enterprise 
-# dependency and container scanning (like Defender or Trivy) would run.
+# Note: Container scanning (Trivy/Defender) is kept as a placeholder
+# for this portfolio reference architecture. Dependency scanning is executed.
 steps:
   - script: |
-      echo "Placeholder: Run dotnet list package --vulnerable"
-      # dotnet list package --vulnerable
+      echo "Running .NET Dependency Vulnerability Scan..."
+      dotnet list EnterpriseClaims.slnx package --vulnerable --include-transitive
     displayName: 'Run Dependency Scan'
 
   - script: |

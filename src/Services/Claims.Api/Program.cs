@@ -16,6 +16,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<ClaimSubmissionValidator>();
 builder.Services.AddSingleton<ClaimNumberGenerator>();
+builder.Services.AddScoped<IClaimRepository, EfClaimRepository>();
+builder.Services.AddScoped<ClaimSubmissionService>();
 
 builder.Services.AddSingleton<IMessagePublisher, InMemoryMessageBus>();
 builder.Services.AddEnterpriseSecurity(builder.Configuration);
@@ -63,50 +65,17 @@ app.MapGet("/", () => Results.Ok(new
 
 app.MapPost("/claims", async (
     ClaimSubmissionRequest request,
-    ClaimSubmissionValidator validator,
-    ClaimNumberGenerator claimNumberGenerator,
-    ClaimsDbContext dbContext,
-    IMessagePublisher messagePublisher,
+    ClaimSubmissionService service,
     CancellationToken cancellationToken) =>
 {
-    cancellationToken.ThrowIfCancellationRequested();
+    var result = await service.SubmitAsync(request, cancellationToken);
 
-    var validation = validator.Validate(request);
-    if (!validation.IsValid)
+    if (!result.Validation.IsValid)
     {
-        return Results.BadRequest(ApiResponse.Failure<ClaimSubmissionResponse>(validation.Errors));
+        return Results.BadRequest(ApiResponse.Failure<ClaimSubmissionResponse>(result.Validation.Errors));
     }
 
-    var claim = new ClaimRecord
-    {
-        Id = Guid.NewGuid(),
-        ClaimNumber = claimNumberGenerator.Create(),
-        CustomerId = request.CustomerId,
-        PolicyNumber = request.PolicyNumber,
-        EstimatedAmount = request.EstimatedAmount,
-        LossDescription = request.LossDescription,
-        Status = "Submitted",
-        SubmittedAt = DateTimeOffset.UtcNow
-    };
-
-    dbContext.Claims.Add(claim);
-    await dbContext.SaveChangesAsync(cancellationToken);
-
-    var evt = new ClaimSubmittedEvent(
-        claim.ClaimNumber,
-        claim.CustomerId,
-        claim.PolicyNumber,
-        claim.EstimatedAmount,
-        claim.SubmittedAt);
-
-    await messagePublisher.PublishAsync(evt, cancellationToken);
-
-    var response = new ClaimSubmissionResponse(
-        claim.ClaimNumber,
-        claim.Status,
-        claim.SubmittedAt);
-
-    return Results.Accepted($"/claims/{response.ClaimNumber}", ApiResponse.Success(response));
+    return Results.Accepted($"/claims/{result.Response!.ClaimNumber}", ApiResponse.Success(result.Response));
 })
 .WithName("SubmitClaim")
 .RequireAuthorization("Customer");
@@ -114,13 +83,23 @@ app.MapPost("/claims", async (
 app.MapGet("/claims/{claimNumber}", async (
     string claimNumber,
     ClaimsDbContext dbContext,
+    System.Security.Claims.ClaimsPrincipal user,
     CancellationToken cancellationToken) =>
 {
     var claim = await dbContext.Claims.FirstOrDefaultAsync(c => c.ClaimNumber == claimNumber, cancellationToken);
-    
+
     if (claim is null)
     {
         return Results.NotFound(ApiResponse.Failure<ClaimStatusResponse>([ApiError.NotFound("claim.not_found", "Claim not found.")]));
+    }
+
+    // Authorization: Allow 'ClaimProcessor' role or verify CustomerId ownership
+    var isProcessor = user.IsInRole("ClaimProcessor") || user.IsInRole("Admin");
+    var customerIdClaim = user.FindFirst("customerId")?.Value;
+
+    if (!isProcessor && (string.IsNullOrEmpty(customerIdClaim) || customerIdClaim != claim.CustomerId))
+    {
+        return Results.Forbid();
     }
 
     var response = new ClaimStatusResponse(

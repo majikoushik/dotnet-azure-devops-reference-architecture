@@ -41,8 +41,17 @@ var sqlServerName = 'sql-${suffix}-${substring(uniqueSuffix, 0, 4)}'
 var sqlDatabaseName = 'sqldb-${suffix}'
 var acrName = 'cr${appName}${environment}${substring(uniqueSuffix, 0, 4)}'
 var containerAppEnvName = 'cae-${suffix}'
+var identityName = 'id-${suffix}'
 
 // Modules
+module identity 'modules/identity.bicep' = {
+  name: 'identityDeploy'
+  params: {
+    location: location
+    identityName: identityName
+    tags: tags
+  }
+}
 module logAnalytics 'modules/log-analytics.bicep' = {
   name: 'logAnalyticsDeploy'
   params: {
@@ -108,6 +117,7 @@ module containerRegistry 'modules/container-registry.bicep' = {
     location: location
     acrName: acrName
     tags: tags
+    principalId: identity.outputs.principalId
   }
 }
 
@@ -119,6 +129,10 @@ module containerAppEnv 'modules/container-apps.bicep' = {
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
     logAnalyticsCustomerId: logAnalytics.outputs.workspaceCustomerId
     tags: tags
+    acrLoginServer: containerRegistry.outputs.acrLoginServer
+    identityId: identity.outputs.identityId
+    identityClientId: identity.outputs.clientId
+    environmentSuffix: environment
   }
 }
 

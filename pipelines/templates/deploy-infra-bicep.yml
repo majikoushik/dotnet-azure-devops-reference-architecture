@@ -7,6 +7,8 @@ parameters:
     type: string
   - name: environment
     type: string
+  - name: sqlAdminPassword
+    type: string
   - name: bicepFile
     type: string
     default: 'infra/bicep/main.bicep'
@@ -24,6 +26,6 @@ steps:
       resourceGroupName: '${{ parameters.resourceGroupName }}'
       location: '${{ parameters.location }}'
       templateLocation: 'Linked artifact'
-      csmFile: '${{ parameters.bicepFile }}'
-      csmParametersFile: '${{ parameters.parametersFile }}'
+      csmFile: 'infra/bicep/main.bicep'
+      overrideParameters: '-environment ${{ parameters.environment }} -sqlAdminPassword "${{ parameters.sqlAdminPassword }}"'
       deploymentMode: 'Incremental'

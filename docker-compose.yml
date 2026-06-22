@@ -6,6 +6,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER:-EnterpriseClaimsLocal}
+      Jwt__Audience: ${JWT_AUDIENCE:-EnterpriseClaimsApi}
       ReverseProxy__Clusters__customer-api__Destinations__destination1__Address: http://customer-api:8080/
       ReverseProxy__Clusters__claims-api__Destinations__destination1__Address: http://claims-api:8080/
     ports:
@@ -22,6 +25,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER:-EnterpriseClaimsLocal}
+      Jwt__Audience: ${JWT_AUDIENCE:-EnterpriseClaimsApi}
     ports:
       - "8081:8080"
 
@@ -32,7 +38,10 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__ClaimsDb: "Server=sqlserver,1433;Database=ClaimsDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True"
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER:-EnterpriseClaimsLocal}
+      Jwt__Audience: ${JWT_AUDIENCE:-EnterpriseClaimsApi}
+      ConnectionStrings__ClaimsDb: "Server=sqlserver,1433;Database=ClaimsDb;User Id=sa;Password=${SQL_PASSWORD};TrustServerCertificate=True"
     ports:
       - "8082:8080"
     depends_on:
@@ -50,6 +59,6 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "Your_password123"
+      MSSQL_SA_PASSWORD: "${SQL_PASSWORD}"
     ports:
       - "1433:1433"
