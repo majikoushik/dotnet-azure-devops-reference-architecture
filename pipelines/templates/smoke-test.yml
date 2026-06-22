@@ -1,0 +1,10 @@
+parameters:
+  - name: endpointUrl
+    type: string
+
+steps:
+  - script: |
+      echo "Running smoke test against ${{ parameters.endpointUrl }}"
+      curl -sf ${{ parameters.endpointUrl }}/health || exit 1
+      echo "Smoke test passed"
+    displayName: 'Smoke Test'

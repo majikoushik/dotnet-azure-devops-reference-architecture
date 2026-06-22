@@ -1,0 +1,140 @@
+# Azure DevOps Multi-Stage Pipeline for Enterprise Claims Processing
+# Configuration Required in Azure DevOps:
+# 1. Service Connection: 'Azure-ARM-Service-Connection'
+# 2. Docker Registry Service Connection: 'ACR-Service-Connection'
+# 3. Variable Groups: (If specific environment secrets are needed)
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    exclude:
+      - docs/*
+      - README.md
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # The EnterpriseClaims-Dev-Variables group should contain:
+  # - containerRegistry: (e.g., myacr.azurecr.io)
+  # - containerAppEnvironmentDomain: (e.g., myenv.eastus.azurecontainerapps.io)
+  - group: 'EnterpriseClaims-Dev-Variables'
+  - name: azureServiceConnection
+    value: 'Azure-ARM-Service-Connection'
+  - name: dockerRegistryConnection
+    value: 'ACR-Service-Connection'
+  - name: resourceGroupDev
+    value: 'rg-entclaims-dev'
+  - name: location
+    value: 'eastus'
+
+stages:
+  - stage: Build
+    displayName: 'Continuous Integration'
+    jobs:
+      - job: DotNetBuildAndTest
+        displayName: 'Build & Test .NET Services'
+        steps:
+          - template: templates/build-dotnet.yml
+          - template: templates/test-dotnet.yml
+
+      - job: DockerBuild
+        displayName: 'Build & Push Docker Images'
+        dependsOn: DotNetBuildAndTest
+        steps:
+          - template: templates/docker-build.yml
+            parameters:
+              serviceConnection: '$(dockerRegistryConnection)'
+              containerRegistry: '$(containerRegistry)'
+              imageName: 'api-gateway'
+              dockerfilePath: 'src/ApiGateway/Dockerfile'
+
+          - template: templates/docker-build.yml
+            parameters:
+              serviceConnection: '$(dockerRegistryConnection)'
+              containerRegistry: '$(containerRegistry)'
+              imageName: 'claims-api'
+              dockerfilePath: 'src/Services/Claims.Api/Dockerfile'
+
+          - template: templates/docker-build.yml
+            parameters:
+              serviceConnection: '$(dockerRegistryConnection)'
+              containerRegistry: '$(containerRegistry)'
+              imageName: 'customer-api'
+              dockerfilePath: 'src/Services/Customer.Api/Dockerfile'
+
+          - template: templates/docker-build.yml
+            parameters:
+              serviceConnection: '$(dockerRegistryConnection)'
+              containerRegistry: '$(containerRegistry)'
+              imageName: 'notification-worker'
+              dockerfilePath: 'src/Workers/Notification.Worker/Dockerfile'
+
+      - job: SecurityScan
+        displayName: 'Security & Dependency Scan'
+        dependsOn: DotNetBuildAndTest
+        steps:
+          - template: templates/security-scan.yml
+
+  - stage: DeployDev
+    displayName: 'Deploy to Development'
+    dependsOn: Build
+    condition: succeeded('Build')
+    jobs:
+      - deployment: DeployInfra
+        displayName: 'Provision Infrastructure'
+        environment: 'Development'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - template: templates/deploy-infra-bicep.yml
+                  parameters:
+                    serviceConnection: '$(azureServiceConnection)'
+                    resourceGroupName: '$(resourceGroupDev)'
+                    location: '$(location)'
+                    environment: 'dev'
+
+      - deployment: DeployApps
+        displayName: 'Deploy Container Apps'
+        dependsOn: DeployInfra
+        environment: 'Development'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - template: templates/deploy-container-apps.yml
+                  parameters:
+                    serviceConnection: '$(azureServiceConnection)'
+                    resourceGroupName: '$(resourceGroupDev)'
+                    containerAppName: 'ca-api-gateway-dev'
+                    image: '$(containerRegistry)/api-gateway:$(Build.BuildId)'
+                
+                - template: templates/deploy-container-apps.yml
+                  parameters:
+                    serviceConnection: '$(azureServiceConnection)'
+                    resourceGroupName: '$(resourceGroupDev)'
+                    containerAppName: 'ca-claims-api-dev'
+                    image: '$(containerRegistry)/claims-api:$(Build.BuildId)'
+
+                - template: templates/deploy-container-apps.yml
+                  parameters:
+                    serviceConnection: '$(azureServiceConnection)'
+                    resourceGroupName: '$(resourceGroupDev)'
+                    containerAppName: 'ca-customer-api-dev'
+                    image: '$(containerRegistry)/customer-api:$(Build.BuildId)'
+
+                - template: templates/deploy-container-apps.yml
+                  parameters:
+                    serviceConnection: '$(azureServiceConnection)'
+                    resourceGroupName: '$(resourceGroupDev)'
+                    containerAppName: 'ca-notification-worker-dev'
+                    image: '$(containerRegistry)/notification-worker:$(Build.BuildId)'
+                
+                - template: templates/smoke-test.yml
+                  parameters:
+                    endpointUrl: 'https://ca-api-gateway-dev.$(containerAppEnvironmentDomain)'

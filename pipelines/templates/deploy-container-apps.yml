@@ -1,0 +1,22 @@
+parameters:
+  - name: serviceConnection
+    type: string
+  - name: resourceGroupName
+    type: string
+  - name: containerAppName
+    type: string
+  - name: image
+    type: string
+
+steps:
+  - task: AzureCLI@2
+    displayName: 'Deploy to Azure Container Apps'
+    inputs:
+      azureSubscription: '${{ parameters.serviceConnection }}'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        az containerapp update \
+          --name ${{ parameters.containerAppName }} \
+          --resource-group ${{ parameters.resourceGroupName }} \
+          --image ${{ parameters.image }}

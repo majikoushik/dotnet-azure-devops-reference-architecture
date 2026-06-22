@@ -1,0 +1,29 @@
+parameters:
+  - name: serviceConnection
+    type: string
+  - name: resourceGroupName
+    type: string
+  - name: location
+    type: string
+  - name: environment
+    type: string
+  - name: bicepFile
+    type: string
+    default: 'infra/bicep/main.bicep'
+  - name: parametersFile
+    type: string
+    default: 'infra/bicep/parameters/dev.bicepparam'
+
+steps:
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: 'Deploy Bicep Infrastructure'
+    inputs:
+      deploymentScope: 'Resource Group'
+      azureResourceManagerConnection: '${{ parameters.serviceConnection }}'
+      action: 'Create Or Update Resource Group'
+      resourceGroupName: '${{ parameters.resourceGroupName }}'
+      location: '${{ parameters.location }}'
+      templateLocation: 'Linked artifact'
+      csmFile: '${{ parameters.bicepFile }}'
+      csmParametersFile: '${{ parameters.parametersFile }}'
+      deploymentMode: 'Incremental'

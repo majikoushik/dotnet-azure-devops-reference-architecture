@@ -1,0 +1,16 @@
+parameters:
+  - name: testProjectsPath
+    type: string
+    default: 'tests/**/*.csproj'
+  - name: buildConfiguration
+    type: string
+    default: 'Release'
+
+steps:
+  - task: DotNetCoreCLI@2
+    displayName: 'Run Unit Tests'
+    inputs:
+      command: 'test'
+      projects: '${{ parameters.testProjectsPath }}'
+      arguments: '--configuration ${{ parameters.buildConfiguration }} --no-build --collect "Code coverage"'
+      publishTestResults: true

@@ -1,0 +1,12 @@
+# Note: This is a portfolio-ready placeholder demonstrating where enterprise 
+# dependency and container scanning (like Defender or Trivy) would run.
+steps:
+  - script: |
+      echo "Placeholder: Run dotnet list package --vulnerable"
+      # dotnet list package --vulnerable
+    displayName: 'Run Dependency Scan'
+
+  - script: |
+      echo "Placeholder: Run Trivy or Defender for Cloud container scan"
+      # trivy image <your-registry>/<image>
+    displayName: 'Run Container Scan'

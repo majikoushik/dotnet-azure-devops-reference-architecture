@@ -1,0 +1,28 @@
+parameters:
+  - name: serviceConnection
+    type: string
+  - name: containerRegistry
+    type: string
+  - name: imageName
+    type: string
+  - name: dockerfilePath
+    type: string
+  - name: buildContext
+    type: string
+    default: '$(Build.SourcesDirectory)'
+  - name: imageTag
+    type: string
+    default: '$(Build.BuildId)'
+
+steps:
+  - task: Docker@2
+    displayName: 'Build and Push ${{ parameters.imageName }}'
+    inputs:
+      command: 'buildAndPush'
+      containerRegistry: '${{ parameters.serviceConnection }}'
+      repository: '${{ parameters.containerRegistry }}/${{ parameters.imageName }}'
+      dockerfile: '${{ parameters.dockerfilePath }}'
+      buildContext: '${{ parameters.buildContext }}'
+      tags: |
+        ${{ parameters.imageTag }}
+        latest
