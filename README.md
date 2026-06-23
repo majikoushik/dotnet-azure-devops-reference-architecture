@@ -1,6 +1,6 @@
-# Enterprise Claims Processing Platform
+[![CI](https://github.com/majikoushik/dotnet-azure-devops-reference-architecture/actions/workflows/ci.yml/badge.svg)](https://github.com/majikoushik/dotnet-azure-devops-reference-architecture/actions/workflows/ci.yml)
 
-[![Build Status](https://dev.azure.com/organization/project/_apis/build/status/claims-platform-ci?branchName=main)](https://dev.azure.com/organization/project/_build/latest?definitionId=1&branchName=main)
+# Enterprise Claims Processing Platform
 
 A portfolio-grade **Reference Architecture** demonstrating how to build a scalable, cloud-native microservices platform for the Insurance Domain using **.NET** and **Azure**.
 
