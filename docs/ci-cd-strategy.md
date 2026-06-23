@@ -2,7 +2,7 @@
 
 This document outlines the Continuous Integration and Continuous Deployment strategy for the Enterprise Claims Processing Platform.
 
-The pipeline architecture is driven by **Azure DevOps YAML Pipelines** and is located entirely inside the `pipelines/` directory.
+The pipeline architecture is driven primarily by **Azure DevOps YAML Pipelines** (located inside the `pipelines/` directory), with an alternative **GitHub Actions** CI workflow (located in `.github/workflows/ci.yml`) for pull request and main branch validation.
 
 ## Pipeline Flow
 
